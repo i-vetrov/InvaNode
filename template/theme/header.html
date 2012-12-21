@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{TITLE}}</title>
+        <meta name="description" content="{{PAGE_DESCRIPTION}}" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <link type="text/css" rel="stylesheet" media="all" href="/template/theme/style.css" />
+        <link type="text/css" rel="stylesheet" media="all" href="/template/assets/css/bootstrap.min.css" />
+        <script src="/template/assets/js/jquery.js"></script>
+        <script src="/template/assets/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+   <div class="navbar navbar-inverse">
+      <div class="grad-menu">
+        <div class="container">
+         <div style="width: 940px; margin: 0 auto;">
+         <a class="main-logo" href="{{SITE_URL}}">{{APPNAME}}</a>
+         
+         <div class="user-menu">
+              {{USER_MENU}}
+         </div>
+         </div>
+        </div>
+          
+          <div class="container">
+              <div class="main-menu">
+              {{MAIN_MENU}}
+              <script>
+                  var curPageUrl = "{{JS_CUR_PAGE_URL}}";
+                  $("document").ready(function(){
+                     
+                  });
+              </script>
+              </div>
+          </div>
+          
+          
+        </div>
+    </div>
+    

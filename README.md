@@ -26,6 +26,8 @@ Then clone InvaNode sources:
 
 Edit options.js to set up database connection and some site description.
 
+Use invanode.sql to create empty database with user "admin" and password "admin"
+
 ## More information
 
 Visit [invanode.org](http://www.invanode.org) website to read some news and get help.

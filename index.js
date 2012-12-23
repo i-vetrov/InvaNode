@@ -309,6 +309,16 @@ function editOldData(request, response)
                                             }
                                         });
                         break;
+                case "edit_user_pass":db.editUserProc(request, postData, function(err){
+                                            if(!err){
+                                                respDone(response);
+                                            }
+                                            else{
+                                                respGoIndex(response);
+                                                console.log("login error");
+                                            }
+                                        });
+                        break;        
                 case "opendata":db.openDataForEditProc(request, postData, function(err, data){
                                             if(!err){
                                                 response.writeHead(200, {"Content-Type": "text/plain"});
@@ -319,7 +329,7 @@ function editOldData(request, response)
                                                 console.log("login error");
                                             }
                                         });
-                        break;        
+                        break;    
                 default:
                     response.writeHead(200, {"Content-Type": "text/plain"});
                     response.write('error');
@@ -371,7 +381,17 @@ function saveNewData(request, response)
                                                 console.log("login error");
                                             }
                                         });   
-                        break;                
+                        break;
+                case "users":db.saveDataProc(request, "users", postData, function(err){
+                                            if(!err){
+                                                respDone(response);
+                                            }    
+                                            else{
+                                                respGoIndex(response); 
+                                                console.log("login error");
+                                            }
+                                        });   
+                        break;         
                 default:    respError(response);
                     break;
             }

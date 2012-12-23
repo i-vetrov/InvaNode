@@ -100,7 +100,7 @@ exports.coutStatistics = function (stepFoo)
 }
 
 exports.editDataProc = function (request, data, stepFoo)
-{
+{   
     var name = querystring.parse(data).name;
     var text = querystring.parse(data).text;
     var afterCut = text.split("--CUT--");
@@ -129,6 +129,30 @@ exports.editDataProc = function (request, data, stepFoo)
 });  
 }
 
+
+exports.editUserProc = function (request, data, stepFoo)
+{   
+  var id = querystring.parse(data).id;
+  var password = querystring.parse(data).password;
+  loggedIn(request, function(check){              
+                            if(check){
+                                client.query("UPDATE users SET password=md5('"+password+"') WHERE id='"+id+"'",
+                                        function (err, results, fields) {
+                                                if(!err){
+                                                    stepFoo(false);           
+                                                }
+                                                else{
+                                                    console.log(err);
+                                                }
+                                        });
+                            }
+                            else{
+                                stepFoo(true); 
+                            }
+});  
+}
+
+
 exports.deleteDataProc = function (request, data, stepFoo)
 {
     var type = querystring.parse(data).type;
@@ -153,6 +177,7 @@ exports.deleteDataProc = function (request, data, stepFoo)
 
 exports.saveDataProc = function (request, type, data, stepFoo)
 {
+  if(type!="users"){
     var date = Math.round(new Date().getTime() / 1000);
     var name = querystring.parse(data).name;
     var text = querystring.parse(data).text;
@@ -162,18 +187,41 @@ exports.saveDataProc = function (request, type, data, stepFoo)
     }
     var alias = querystring.parse(data).alias;
     var description = querystring.parse(data).description;
-    
-    loggedIn(request, function(check){              
+  }
+  else{
+    var username = querystring.parse(data).name;
+    var password = querystring.parse(data).password; 
+  }
+      
+  loggedIn(request, function(check){              
                             if(check){
-                                      client.query("INSERT INTO "+type+" VALUES(NULL, "+date+", '"+name+"', '"+afterCut[1]+"', '"+afterCut[0]+"','"+alias+"','"+type+"','"+description+"')",
-                                        function (err, results, fields) {
-                                                    if(!err){
-                                                        stepFoo(false);           
-                                                    }
-                                                    else{
-                                                        console.log(err);
-                                                    }
-                                            });
+                                      if(type!="users"){
+                                          client.query("INSERT INTO "+type+" VALUES(NULL, "+date+", '"+name+"', '"+afterCut[1]+"', '"+afterCut[0]+"','"+alias+"','"+type+"','"+description+"')",
+                                                function (err, results, fields) {
+                                                            if(!err){
+                                                                stepFoo(false);           
+                                                            }
+                                                            else{
+                                                                console.log(err);
+                                                            }
+                                                    });
+                                      }      
+                                      else{
+                                         client.query("INSERT INTO "+type+" VALUES(NULL, '"+username+"', md5('"+password+"'), '')",
+                                                function (err, results, fields) {
+                                                            if(!err){
+                                                                stepFoo(false);           
+                                                            }
+                                                            else{
+                                                                console.log(err);
+                                                            }
+                                                    }); 
+                                          
+                                          
+                                      }
+                        
+                    
+                
                             }
                             else{
                                 stepFoo(true);
@@ -255,7 +303,6 @@ exports.setLogin = function (request, stepFoo)
                   var postParts = onePostData.split('=');
                   postDadaObj[ postParts[ 0 ].trim() ] = ( postParts[ 1 ] || '' ).trim();
                   });
-                  
                 client.query("SELECT * FROM users WHERE name='"+postDadaObj.login.realEscape()+"'",
                              function(err, results, fields){
                                         if (err) {

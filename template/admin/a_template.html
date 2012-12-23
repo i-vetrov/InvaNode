@@ -128,7 +128,7 @@ function addNewImage(event)
     function buttonsGroup(type, id)
     {
         if(type=='users'){
-            return '';
+            return '<a class="btn btn-primary" href="#" style="margin-top: 15px;" onclick="editUser('+id+');return false;"><i class="icon-pencil icon-white"></i> Change password</a>';
         }
         else if(type=='templates'){
             return '<div class="btn-toolbar"><div class="btn-group"><a class="btn" href="#" onclick="editTemplate(\''+id+'\');return false;"><i class="icon-edit"></i></a></div></div>';
@@ -136,6 +136,15 @@ function addNewImage(event)
         else{
             return '<div class="btn-toolbar"><div class="btn-group"><a class="btn" href="#" onclick="editPPU(\''+type+'\', '+id+');return false;"><i class="icon-edit"></i></a><a class="btn btn-danger" href="#" onclick="deletePPU(\''+type+'\', '+id+');return false;"><i class="icon-remove"></i></a></div></div>';
         }
+    }
+    
+    function editUser(id, userName)
+    {   
+        var type="users";
+        var name ='Change password';
+        var toHtml = '<div class="hero-unit"><div style="margin-bottom: 30px;"><h2 style="float: left; margin-right: 40px;">'+name+' editor</h2><div style="padding-top: 15px;"><a class="btn btn-primary" href="#" onclick="saveEdited(\''+type+'\', '+id+');return false;"><i class="icon-pencil icon-white"></i> Save</a><a style="margin-left: 10px;" class="btn btn-danger" href="#" onclick="loadAll(\''+type+'\');return false;"><i class="icon-remove icon-white"></i> Cancel</a></div></div>';  
+            toHtml +='<div class="span5"><h4 style="float: left; line-height: 10px; margin-right: 10px;">New password: </h4> <input type="text" class="span3" id="ent_password" /></div>';
+            $("#main_canv").html(toHtml);
     }
     
     function editTemplate(fName)
@@ -183,8 +192,8 @@ function addNewImage(event)
                 break;
         }
         
-        
-        var toHtml = '<div class="hero-unit"><div style="margin-bottom: 30px;"><h2 style="float: left; margin-right: 40px;">'+name+' editor</h2><div style="padding-top: 15px;"><a class="btn btn-primary" href="#" onclick="saveNew(\''+type+'\');return false;"><i class="icon-pencil icon-white"></i> Save</a></div></div>';
+        if(type!="users"){
+        var toHtml = '<div class="hero-unit"><div style="margin-bottom: 30px;"><h2 style="float: left; margin-right: 40px;">'+name+' editor</h2><div style="padding-top: 15px;"><a class="btn btn-primary" href="#" onclick="saveNew(\''+type+'\');return false;"><i class="icon-pencil icon-white"></i> Save</a><a style="margin-left: 10px;" class="btn btn-danger" href="#" onclick="loadAll(\''+type+'\');return false;"><i class="icon-remove icon-white"></i> Cancel</a></div></div>';
          
          toHtml +='<div style="margin-left: 0px;" class="span5"><h4 style="float: left; line-height: 10px; margin-right: 10px;">Name: </h4> <input type="text" class="span4" id="ent_name" onkeyup="trackAlias()" /></div><div class="span5"><h4 style="float: left; line-height: 10px; margin-right: 10px;">Alias: </h4> <input type="text" class="span4" id="ent_alias" /></div><textarea style="width: 810px; height: 400px;" id="editor"></textarea>';
          toHtml +='<div class="span11" style="margin-left:0;"><h4 style="float: left; line-height: 10px; margin-right: 17px;">Description: </h4> <input type="text" value="" class="span9" id="ent_description" /></div>';
@@ -194,6 +203,13 @@ function addNewImage(event)
                 "html": true,
                 "color": true
             });
+        }
+        else
+        {
+            var toHtml = '<div class="hero-unit"><div style="margin-bottom: 30px;"><h2 style="float: left; margin-right: 40px;">'+name+' editor</h2><div style="padding-top: 15px;"><a class="btn btn-primary" href="#" onclick="saveNew(\''+type+'\');return false;"><i class="icon-pencil icon-white"></i> Save</a><a style="margin-left: 10px;" class="btn btn-danger" href="#" onclick="loadAll(\''+type+'\');return false;"><i class="icon-remove icon-white"></i> Cancel</a></div></div>';  
+            toHtml +='<div style="margin-left: 0px;" class="span4"><h4 style="float: left; line-height: 10px; margin-right: 10px;">Name: </h4> <input type="text" class="span3" id="ent_name"/></div><div class="span5"><h4 style="float: left; line-height: 10px; margin-right: 10px;">Password: </h4> <input type="text" class="span3" id="ent_password" /></div>';
+            $("#main_canv").html(toHtml);
+        }    
     }
     
     function trackAlias()
@@ -204,7 +220,7 @@ function addNewImage(event)
     
     function saveNew(type)
     {
-        
+        if(type!="users"){
         var name = $("#ent_name").val();
         var alias =  $("#ent_alias").val();
         var text = $('#editor').val();
@@ -213,7 +229,18 @@ function addNewImage(event)
            bootbox.alert(data, function() {
                 loadAll(type);
             }); 
-        });  
+        });
+        }
+        else{
+        var name = $("#ent_name").val();
+        var password =  $("#ent_password").val();
+        $.post('post_page_savings', {name:name,password:password,type:type},function(data){
+           bootbox.alert(data, function() {
+                loadAll(type);
+            }); 
+        });
+        
+        }
     }
     
     function deletePPU(type, id)
@@ -286,7 +313,8 @@ function addNewImage(event)
     
     function saveEdited(type, id)
     {
-       var name = $("#ent_name").val();
+       if(type!="users"){
+           var name = $("#ent_name").val();
         var alias =  $("#ent_alias").val();
         var text = $('#editor').val();
         var description = $("#ent_description").val();
@@ -295,7 +323,19 @@ function addNewImage(event)
            bootbox.alert(data, function() {
                 loadAll(type);
             }); 
-        });  
+        });
+       }
+       else{
+       var todo = "edit_user_pass";
+       var password = $("#ent_password").val();
+       $.post('post_page_editing', {todo:todo,id:id,password:password},function(data){
+           bootbox.alert(data, function() {
+                loadAll(type);
+            }); 
+        });
+       
+       }
+       
     }
     
     function reloadTemplate()

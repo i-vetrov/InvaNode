@@ -33,14 +33,21 @@
 .user-menu
 {
     float: right; 
+<<<<<<< HEAD
     width: auto;
+=======
+    width: 361px;
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
     padding: 20px;
     -moz-box-shadow: 0 0 100px rgba(0,0,0,0.5);
     -webkit-box-shadow: 0 0 100px rgba(0,0,0,0.5);
     box-shadow: 0 0 100px rgba(0,0,0,0.5);
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
+<<<<<<< HEAD
     max-height: 65px;
+=======
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
 }
 
 
@@ -154,8 +161,11 @@
 {
     color: #1982d1;
     font-weight: bold;
+<<<<<<< HEAD
 }
 
 #content-container{
     min-height: 516px;
+=======
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
 }

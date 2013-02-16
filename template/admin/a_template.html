@@ -8,18 +8,32 @@
         <script src="/template/assets/js/wysihtml5-0.3.0.min.js"></script>
         <script src="/template/assets/js/bootstrap-wysihtml5-custom.js"></script>
         <script src="/template/assets/js/bootbox.min.js"></script>
+<<<<<<< HEAD
         <script src="/template/assets/js/in.js"></script>
         <link rel="stylesheet" type="text/css" href="/template/assets/css/bootstrap-wysihtml5-0.0.2.css" />
         <link type="text/css" rel="stylesheet" media="all" href="/template/assets/css/bootstrap.min.css" />
+=======
+        <link rel="stylesheet" type="text/css" href="/template/assets/css/bootstrap-wysihtml5-0.0.2.css" />
+        <link type="text/css" rel="stylesheet" media="all" href="/template/assets/css/bootstrap.min.css" />
+  
+        
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
         <script src="/template/admin/codemirror/codemirror.js"></script>
         <link rel="stylesheet" href="/template/admin/codemirror/codemirror.css" />
         <script src="/template/admin/codemirror/mode/xml/xml.js"></script>
         <script src="/template/admin/codemirror/mode/javascript/javascript.js"></script>
         <script src="/template/admin/codemirror/mode/css/css.js"></script>
         <script src="/template/admin/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+<<<<<<< HEAD
   <style>
       body {
         padding-top: 60px;
+=======
+        
+  <style>
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
       }
       .CodeMirror {
         background-color: #fff; 
@@ -37,6 +51,7 @@
 <script>
    var myCodeMirror; 
     String.prototype.replaceAll=function(find, replace_to){
+<<<<<<< HEAD
      return this.replace(new RegExp(find, "g"), replace_to);
 };
 
@@ -44,6 +59,17 @@ function getLocalImages()
 {
     _in.api("get_local_images", function(data){
         var out = "";
+=======
+     alert('a');
+     return this.replace(new RegExp(find, "g"), replace_to);
+};
+
+
+function getLocalImages()
+{   
+    var out = '';
+    $.post("get_local_images", function(data){
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
         if(data=="error"){
             out = "Error loading files";
         }
@@ -63,7 +89,10 @@ function getLocalImages()
         }  
     });
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
 function insertLocalImage(fileName)
 {
     $("#local-image-url").val("http://"+location.host+'/images/'+encodeURI(fileName));
@@ -78,7 +107,11 @@ function addNewImage(event)
   Size = SelectedFile.size;
   FReader = new FileReader();   
   FReader.onload = function(evn){  
+<<<<<<< HEAD
             _in.api("upload_image_file",{'filedata':evn.target.result, 'name':Name, 'size':Size},function(data){
+=======
+            $.post("upload_image_file",{'data':evn.target.result, 'name':Name, 'size':Size},function(data){
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
                     if(data=="error"){alert("somthing went wrong!"); getLocalImages();}
                     else{
                         getLocalImages();
@@ -90,6 +123,7 @@ function addNewImage(event)
 }
     
     $("document").ready(function(){
+<<<<<<< HEAD
        var hash = window.location.hash.split('#')[1];
        if(hash !== undefined){
             loadAll(hash);    
@@ -105,6 +139,14 @@ function addNewImage(event)
         
         var todo='load_all_'+type;
         _in.api(todo, function(data){
+=======
+       loadAll(window.location.hash.split('#')[1]);
+    });
+    function loadAll(type)
+    {   
+        var todo='load_all_'+type;
+        $.post('structural_load', {todo:todo}, function(data){
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
             var toHtml;
             data = $.parseJSON(data);
             if(type!="templates"){
@@ -119,7 +161,11 @@ function addNewImage(event)
                     toHtml +='</div>';
             }
             else{
+<<<<<<< HEAD
                     toHtml ='<h3 style="float: left; margin-right: 40px;">'+type.charAt(0).toUpperCase()+type.slice(1)+'</h3><div style="margin-top: 15px;"></div><button class="btn btn-inverse" onclick="reloadTemplate()" style="">Reload Templates</button>';
+=======
+                    toHtml ='<h3 style="float: left; margin-right: 40px;">'+type.charAt(0).toUpperCase()+type.slice(1)+'</h3><div style="margin-top: 15px;"></div>';
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
                     toHtml +='<div style="clear:both; border-top: 1px solid #DDD;"></div>';
                     var i = data.length;
                     while(i--){
@@ -127,7 +173,11 @@ function addNewImage(event)
                         toHtml +='<div style="clear:both; border-top: 1px solid #DDD;"></div>';  
                     }  
             }
+<<<<<<< HEAD
             $("#main_canv").html(toHtml);
+=======
+            $("#main_canv").html(toHtml)
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
         });
     }
         
@@ -155,7 +205,11 @@ function addNewImage(event)
     
     function editTemplate(fName)
     {
+<<<<<<< HEAD
          _in.api("process_template_data",{todo:"get",fname:fName,fdata:"null"},function(data){
+=======
+         $.post("process_template_data",{todo:"get",fname:fName,fdata:"null"},function(data){
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
           if(data!="error"){
             var toHtml = '<div class="hero-unit"><div style="margin-bottom: 30px;"><h2 style="float: left; margin-right: 40px;">'+fName+'</h2><div style="padding-top: 15px;"><a class="btn btn-primary" href="#" onclick="saveTemplate(\''+fName+'\');return false;"><i class="icon-pencil icon-white"></i> Save</a><a style="margin-left: 10px;" class="btn btn-danger" href="#" onclick="loadAll(\'templates\');return false;"><i class="icon-remove icon-white"></i> Cancel</a></div></div>';
          
@@ -175,7 +229,11 @@ function addNewImage(event)
     {
         myCodeMirror.save();
         var fdata = $('#editor').val();
+<<<<<<< HEAD
          _in.api("process_template_data",{todo:"save",fname:fName,fdata:fdata},function(data){
+=======
+         $.post("process_template_data",{todo:"save",fname:fName,fdata:fdata},function(data){
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
           if(data!="error"){
              bootbox.alert("File <b>"+fName+"</b> saved!", function(){loadAll("templates");});
             }
@@ -231,22 +289,34 @@ function addNewImage(event)
         var alias =  $("#ent_alias").val();
         var text = $('#editor').val();
         var description = $("#ent_description").val();
+<<<<<<< HEAD
         _in.api('post_page_savings', {name:name,alias:alias,type:type,text:text,description:description},function(data){
            bootbox.alert(data, function() {
                 if(data == "done"){
                     loadAll(type);
                 }
+=======
+        $.post('post_page_savings', {name:name,alias:alias,type:type,text:text,description:description},function(data){
+           bootbox.alert(data, function() {
+                loadAll(type);
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
             }); 
         });
         }
         else{
         var name = $("#ent_name").val();
         var password =  $("#ent_password").val();
+<<<<<<< HEAD
         _in.api('post_page_savings', {name:name,password:password,type:type},function(data){
            bootbox.alert(data, function() {
                if(data == "done"){
                     loadAll(type);
                 }
+=======
+        $.post('post_page_savings', {name:name,password:password,type:type},function(data){
+           bootbox.alert(data, function() {
+                loadAll(type);
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
             }); 
         });
         
@@ -256,11 +326,17 @@ function addNewImage(event)
     function deletePPU(type, id)
     {
         var todo='delete';
+<<<<<<< HEAD
         _in.api("post_page_editing", {todo:todo, type:type, id:id}, function(data){
           bootbox.alert(data, function() {
                 if(data == "done"){
                     loadAll(type);
                 }
+=======
+        $.post("post_page_editing", {todo:todo, type:type, id:id}, function(data){
+          bootbox.alert(data, function() {
+                loadAll(type);
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
             });
         });
     }
@@ -268,7 +344,11 @@ function addNewImage(event)
     function editPPU(type, id)
     {   
         var todo='opendata';
+<<<<<<< HEAD
         _in.api("post_page_editing", {todo:todo, type:type, id:id}, function(data){
+=======
+        $.post("post_page_editing", {todo:todo, type:type, id:id}, function(data){
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
            openEditor(data, type, id); 
         });
     }
@@ -331,22 +411,34 @@ function addNewImage(event)
         var text = $('#editor').val();
         var description = $("#ent_description").val();
         var todo='edit';
+<<<<<<< HEAD
         _in.api('post_page_editing', {todo:todo,id:id,name:name,alias:alias,type:type,text:text,description:description},function(data){
            bootbox.alert(data, function() {
                 if(data == "done"){
                     loadAll(type);
                 }
+=======
+        $.post('post_page_editing', {todo:todo,id:id,name:name,alias:alias,type:type,text:text,description:description},function(data){
+           bootbox.alert(data, function() {
+                loadAll(type);
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
             }); 
         });
        }
        else{
        var todo = "edit_user_pass";
        var password = $("#ent_password").val();
+<<<<<<< HEAD
        _in.api('post_page_editing', {todo:todo,id:id,password:password},function(data){
            bootbox.alert(data, function() {
                 if(data == "done"){
                     loadAll(type);
                 }
+=======
+       $.post('post_page_editing', {todo:todo,id:id,password:password},function(data){
+           bootbox.alert(data, function() {
+                loadAll(type);
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
             }); 
         });
        
@@ -356,6 +448,7 @@ function addNewImage(event)
     
     function reloadTemplate()
     {
+<<<<<<< HEAD
         _in.api('reload_template_immediate',function(data){
            bootbox.alert(data); 
         });
@@ -467,6 +560,11 @@ function addNewImage(event)
         _in.api('reload_plugins',function(data){
            bootbox.alert(data); 
         });
+=======
+        $.post('reload_template_immidiate',function(data){
+           bootbox.alert(data); 
+        }); 
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
     }
 </script>
     <div class="navbar navbar-inverse navbar-fixed-top">
@@ -484,8 +582,13 @@ function addNewImage(event)
               <li><a href="#posts" onclick="loadAll('posts');">Posts</a></li>
               <li><a href="#users" onclick="loadAll('users');">Users</a></li>
               <li><a href="#templates" onclick="loadAll('templates');">Templates</a></li>
+<<<<<<< HEAD
               <li><a href="#plugins" onclick="loadPluginsAdmin();">Plugins</a></li>
             </ul>
+=======
+            </ul>
+            <button class="btn btn-inverse" onclick="reloadTemplate()" style="">Reload Template</button>  
+>>>>>>> 65bd8ae9e9554d763d7b21a1b8d30c4a50d8ae84
              {{USER_MENU}} 
           </div><!--/.nav-collapse -->
         </div>

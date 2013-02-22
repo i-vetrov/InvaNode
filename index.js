@@ -47,6 +47,18 @@ function respFalse(response)
     response.end('false');
 }
 
+function respData(data, response)
+{
+    response.writeHead(200, {"Content-Type": "text/plain"});
+    response.end(data);
+}
+
+function respJSON(data, response)
+{
+    response.writeHead(200, {"Content-Type": "text/plain"});
+    response.end(JSON.stringify(data));
+}
+
 function Template()
 {
     this.header = fs.readFileSync(__dirname+"/template/theme/header.html", 'utf-8'); 
@@ -146,7 +158,7 @@ function popTemplate(request, response, fname, dname)
                     .replaceAll("{{JS_SITE_NAME}}",options.vars.appName)
                     .replaceAll("{{POST_NAME}}", cont.name)
                     .replaceAll("{{POST_DATE}}", new Date(cont.time*1000).toLocaleDateString())
-                    .replaceAll("{{PAGE_CONTENT}}", cont.smaldata+cont.data)
+                    .replaceAll("{{PAGE_CONTENT}}", cont.smalldata+cont.data)
                     .replaceAll("{{MAIN_MENU}}", res)
                     .replaceAll("{{TITLE}}", title)
                     .replaceAll("{{APPNAME}}", options.vars.appName)
@@ -203,7 +215,7 @@ function getPageContent(fname, dname, stepFoo)
            time:'',
            name:'',
            data:'',
-           smaldata:'',
+           smalldata:'',
            alias:'',
            type:'index',
            description:options.vars.indexDescription
@@ -216,7 +228,7 @@ function getPageContent(fname, dname, stepFoo)
                {  
                     results.data += template.small_post.replaceAll("{{SMALL_POST_NAME}}", contents[i].name)
                                             .replaceAll("{{SMALL_POST_DATE}}", new Date(contents[i].time*1000).toLocaleDateString()) //new Date(contents[i].time*1000).getDate()+' '+new Date(contents[i].time*1000).getFullYear())
-                                            .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smaldata)
+                                            .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smalldata)
                                             .replaceAll("{{SMALL_POST_LINK}}", contents[i].alias)
                                             .replaceAll("{{LINK_ALIAS}}", contents[i].alias)
                                             .replaceAll("{{LINK_TITLE}}", contents[i].name.replaceAll('["]', "\\'"));
@@ -484,15 +496,25 @@ function apiCall(request, response)
                             break;
             case "post_page_editing":editOldData(data, request, response);                     
                             break;
-            case "get_entity_by_alias":api.getEntityByAlias(data, db, plugins, response);
+            case "get_entity_by_alias":api.getEntityByAlias(data, db, plugins, function(data){
+                                            respJSON(data, response);
+                                       });
                             break;
-            case "get_entity_by_id":api.getEntityById(data, db, plugins, response);
+            case "get_entity_by_id":api.getEntityById(data, db, plugins, function(data){
+                                            respJSON(data, response);
+                                       });
                             break;
-            case "get_latest_posts":api.getLatestPosts(data, db, plugins, response);
+            case "get_latest_posts":api.getLatestPosts(data, db, plugins, function(data){
+                                            respData(data, response);
+                                       });
                             break;
-            case "get_all_pages":api.getAllPages(db, plugins, response);
+            case "get_all_pages":api.getAllPages(db, plugins, function(data){
+                                            respData(data, response);
+                                       });
                             break;
-            case "get_page_type":api.getPageType(data, db, response);
+            case "get_page_type":api.getPageType(data, db, function(data){
+                                            respJSON(data, response);
+                                       });
                             break;
             case "load_plugins_admin":db.loggedIn(request, function(check, userName){
                                             if(check){
@@ -512,10 +534,15 @@ function apiCall(request, response)
                                             }
                                 });
                             break;
-            case "get_template":api.getTemplate(data, template, plugins, response);
+            case "get_template":api.getTemplate(data, template, plugins, function(data){
+                                            respData(data, response);
+                                       });
                             break;
             case "reload_plugins":plugins.reloadPlugins(response);
                             break;
+            case "plugin":  var _in = api.textApi(db, template, request, plugins);
+                            plugins.serverExecute(_in, data, response);
+                            break;                
             default:respError(response);
                             break;
         } 

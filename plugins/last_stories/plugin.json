@@ -8,6 +8,8 @@
         "replaceWith":""
     },
     "applyTo":[
+        "index",
+        "pages",
         "posts"
     ]
 }

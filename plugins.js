@@ -1,9 +1,21 @@
 var fs = require("fs");
+var message = {error:{message:"error"},done:{message:"done"}};
+
 
 String.prototype.replaceAll=function(find, replace_to){
      return this.replace(new RegExp(find, "g"), replace_to);
 };
 
+String.prototype.escapeSpecialChars = function() {
+    return this.replace(/[\\]/g, '\\\\')
+    .replace(/[\"]/g, '\\\"')
+    .replace(/[\/]/g, '\\/')
+    .replace(/[\b]/g, '\\b')
+    .replace(/[\f]/g, '\\f')
+    .replace(/[\n]/g, '\\n')
+    .replace(/[\r]/g, '\\r')
+    .replace(/[\t]/g, '\\t');
+};
 
 var Plugins = function(){
    var context = this; 
@@ -13,10 +25,35 @@ var Plugins = function(){
    this.list.forEach(function(name){
            var i = context.plugin.length;
            context.plugin[i] = JSON.parse(fs.readFileSync(folder + "/" + name + "/plugin.json", 'utf-8'));
+           context.plugin[i].applyTo.push('page','post','small_post','footer','header'); 
            context.plugin[i].content.replaceWith = fs.readFileSync(folder + "/" + name + "/" + context.plugin[i].content.source, 'utf-8');
            context.plugin[i].alias = name;
+           try{
+                context.plugin[i].serveCode = require("./plugins/"+name+"/server.js");
+           }
+           catch(e){
+               context.plugin[i].serveCode = "none";
+           }
+           context.plugin[i].serverExecute = function(_in, inData, response){
+               if(this.serveCode != "none"){
+                    try {
+                        this.serveCode.execute( _in, inData, message, function(outData){
+                            response.writeHead(200, {"Content-Type": "text/plain"});
+                            response.end(JSON.stringify(outData));
+                        });
+                    }
+                    catch(e)
+                    {
+                        response.writeHead(200, {"Content-Type": "text/plain"});
+                        response.end(JSON.stringify(message.error));
+                    }
+               }
+           };
     });
-    this.reloadPlugins = function(){
+   
+   
+   
+   this.reloadPlugins = function(){
             context.plugin = [];
             context.list = fs.readdirSync(folder);
             context.list.forEach(function(name){
@@ -24,28 +61,68 @@ var Plugins = function(){
                 context.plugin[i] = JSON.parse(fs.readFileSync(folder + "/" + name + "/plugin.json", 'utf-8'));
                 context.plugin[i].content.replaceWith = fs.readFileSync(folder + "/" + name + "/" + context.plugin[i].content.source, 'utf-8');
                 context.plugin[i].alias = name;
+                try{
+                    context.plugin[i].serveCode = require("./plugins/"+name+"/server.js");
+                }
+                catch(e){
+                    context.plugin[i].serveCode = "none";
+                }
+                context.plugin[i].serverExecute = function(_in, inData, response){
+                    if(this.serveCode != "none"){
+                        try {
+                            this.serveCode.execute( _in, inData, message, function(outData){
+                                response.writeHead(200, {"Content-Type": "text/plain"});
+                                response.end(JSON.stringify(outData));
+                            });
+                        }
+                        catch(e)
+                        {
+                            response.writeHead(200, {"Content-Type": "text/plain"});
+                            response.end(JSON.stringify(message.error));
+                        }
+                    }
+                };
             });
     } 
 }
 
 var plugins = new Plugins();
 
+
+
+exports.serverExecute = function(_in, postData, response){ 
+      var pData = JSON.parse(postData);
+      plugins.plugin.forEach(function(plugin){
+          if(plugin.alias==pData.alias)
+              {
+                  plugin.serverExecute(_in, postData, response);
+                  return;
+              }
+      });
+};
+
 exports.fire = function(template, place, stepFoo){
     plugins.plugin.forEach(function(plugin){
-       plugin.applyTo.push('page','post','small_post','footer','header'); 
        if(plugin.applyTo.indexOf(place) != -1){ 
-          template = template.replaceAll(plugin.content.replace, plugin.content.replaceWith);
-        }  
+          try{
+              var JS = JSON.parse(template);
+              template = template.replaceAll(plugin.content.replace, plugin.content.replaceWith.escapeSpecialChars());
+          }
+          catch(e){
+              template = template.replaceAll(plugin.content.replace, plugin.content.replaceWith);
+          }
+       }  
     });
     stepFoo(template);   
 };
 
-exports.reloadPlugins = function(response)
+reloadPlugins = function(response)
 {
     plugins.reloadPlugins();
     response.writeHead(200, {"Content-Type": "text/plain"});
     response.end("done");
 }
+exports.reloadPlugins = reloadPlugins;
 
 exports.fireAdmin = function(response){ 
       response.writeHead(200, {"Content-Type": "text/plain"});
@@ -97,5 +174,4 @@ exports.savePlugin = function(fs, data, response)
     plugins.reloadPlugins();
     response.writeHead(200, {"Content-Type": "text/plain"});
     response.end("done");
-    
 }

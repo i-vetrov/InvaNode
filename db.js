@@ -147,7 +147,7 @@ exports.editDataProc = function (request, data, stepFoo)
     var description = sqlEscape(data.description);
     loggedIn(request, function(check, userName){              
         if(check){
-            client.query("UPDATE "+type+" SET name='"+name+"', data='"+afterCut[1]+"', smaldata='"+afterCut[0]+"', alias='"+alias+"', description='"+description+"' WHERE id='"+id+"'",
+            client.query("UPDATE "+type+" SET name='"+name+"', data='"+afterCut[1]+"', smalldata='"+afterCut[0]+"', alias='"+alias+"', description='"+description+"' WHERE id='"+id+"'",
                 function (err, results, fields) {
                     if(!err){
                         stepFoo(false);           

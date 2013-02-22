@@ -96,7 +96,7 @@ function loadIndex(title)
                 {
                     var smallPostHtml = template.replaceAll("{{SMALL_POST_NAME}}", contents[i].name)
                     .replaceAll("{{SMALL_POST_DATE}}", new Date(contents[i].time*1000).toLocaleDateString())
-                    .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smaldata)
+                    .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smalldata)
                     .replaceAll("{{SMALL_POST_LINK}}", contents[i].alias)
                     .replaceAll("{{LINK_ALIAS}}", contents[i].alias)
                     .replaceAll("{{LINK_TITLE}}", contents[i].name.replaceAll('["]', "\\'"));
@@ -115,7 +115,7 @@ function loadPage(alias, title)
                     contents = JSON.parse(contents);
                     var postHtml = template.replaceAll("{{POST_NAME}}", contents.name)
                     .replaceAll("{{POST_DATE}}", new Date(contents.time*1000).toLocaleDateString())
-                    .replaceAll("{{PAGE_CONTENT}}", contents.smaldata+contents.data)
+                    .replaceAll("{{PAGE_CONTENT}}", contents.smalldata+contents.data)
                     $("#content-container").html(postHtml);
             });
         });
@@ -130,7 +130,7 @@ function loadPost(alias, title)
                     contents = JSON.parse(contents);
                     var postHtml = template.replaceAll("{{POST_NAME}}", contents.name)
                     .replaceAll("{{POST_DATE}}", new Date(contents.time*1000).toLocaleDateString())
-                    .replaceAll("{{PAGE_CONTENT}}", contents.smaldata+contents.data)
+                    .replaceAll("{{PAGE_CONTENT}}", contents.smalldata+contents.data)
                     $("#content-container").html(postHtml);
             });
         });

@@ -19,7 +19,7 @@ It is light and easy customizable.
 
 You have to install [node.js](https://github.com/joyent/node) with npm first. Just make sure you have lates version of node.js.
 
-You will need to install mysql driver (<a href="https://github.com/i-vetrov/InvaNode/">InvaNode-mongo for mongo support</a>):
+You will need to install mysql driver (<a href="https://github.com/i-vetrov/InvaNode-mongo/">InvaNode-mongo for mongo support</a>):
 
       npm install mysql
 

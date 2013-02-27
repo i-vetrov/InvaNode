@@ -35,6 +35,7 @@ function IN(){
                 callback(data);
             },
         error: function(jqXHR, textStatus, errorThrown){
+                callback("error");
                 console.log("API error: " + textStatus + " " + errorThrown);
             }
         });

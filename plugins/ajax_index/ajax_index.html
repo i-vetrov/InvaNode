@@ -21,7 +21,7 @@ $(document).click(function(event) {
             if(alias == curIndex) {
                 try {
                     history.pushState({prevPage:curIndex, title:document.title, type:type}, '', siteUrl+curIndex);
-                    loadIndex(document.title);
+                    loadIndex(title);
                     $(".main-menu a").removeClass("active");
                     $(".main-menu a[page-type='index']").addClass("active");
                 }
@@ -83,27 +83,47 @@ $(document).ready(function(){
   }, false);
 });
 
+function getDate(raw)
+{
+    var date;
+    var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    date = '<span class="date-d">'+raw.getDate()+'</span> <span class="date-m">'+monthNames[raw.getMonth()]+'</span> <span class="date-y">'+raw.getFullYear()+'</span>'
+    return date;
+}
+
 function loadIndex(title)
 {
         curPageUrl = curIndex;
-        document.title = title;
-        _in.api("get_template",{name:"small_post"}, function(template){
-            _in.api("get_latest_posts",{count: 1000}, function(contents){
-                $("#content-container").html('');
-                contents = JSON.parse(contents);
-                var i = contents.length;
-                while(i--)
-                {
-                    var smallPostHtml = template.replaceAll("{{SMALL_POST_NAME}}", contents[i].name)
-                    .replaceAll("{{SMALL_POST_DATE}}", new Date(contents[i].time*1000).toLocaleDateString())
-                    .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smalldata)
-                    .replaceAll("{{SMALL_POST_LINK}}", contents[i].alias)
-                    .replaceAll("{{LINK_ALIAS}}", contents[i].alias)
-                    .replaceAll("{{LINK_TITLE}}", contents[i].name.replaceAll('["]', "\\'"));
-                    $("#content-container").append(smallPostHtml);
-                }	
-            });
-        });
+        document.title = title; //siteName
+        _in.api("get_index", function(contents){
+            contents = JSON.parse(contents);
+            if(contents[0].type=='posts'){
+                _in.api("get_template",{name:"small_post"}, function(template){
+                    $("#content-container").html('');
+                    var i = contents.length;
+                    while(i--)
+                    {
+                        var pageHtml = template.replaceAll("{{SMALL_POST_NAME}}", contents[i].name)
+                        .replaceAll("{{SMALL_POST_DATE}}", getDate(new Date(contents[i].time*1000)))
+                        .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smalldata)
+                        .replaceAll("{{SMALL_POST_LINK}}", contents[i].alias)
+                        .replaceAll("{{LINK_ALIAS}}", contents[i].alias)
+                        .replaceAll("{{LINK_TITLE}}", contents[i].name.replaceAll('["]', "\\'"));
+                        $("#content-container").append(pageHtml);
+                    }	
+                });
+            }
+            else if(contents[0].type=='index'){
+                _in.api("get_template",{name:"index"}, function(template){
+                    $("#content-container").html('');
+                    var pageHTML = template.replaceAll("{{PAGE_CONTENT}}", contents[0].smalldata+contents[0].data)
+                    .replaceAll("{{LINK_ALIAS}}", contents[0].alias)
+                    .replaceAll("{{LINK_TITLE}}", contents[0].name.replaceAll('["]', "\\'"));
+                    $("#content-container").append(pageHTML);                             
+                });
+            }
+        });    
 }
 
 function loadPage(alias, title)
@@ -114,7 +134,7 @@ function loadPage(alias, title)
             _in.api("get_entity_by_alias",{alias: alias, type:"pages"}, function(contents){
                     contents = JSON.parse(contents);
                     var postHtml = template.replaceAll("{{POST_NAME}}", contents.name)
-                    .replaceAll("{{POST_DATE}}", new Date(contents.time*1000).toLocaleDateString())
+                    .replaceAll("{{POST_DATE}}", getDate(new Date(contents.time*1000)))
                     .replaceAll("{{PAGE_CONTENT}}", contents.smalldata+contents.data)
                     $("#content-container").html(postHtml);
             });
@@ -129,7 +149,7 @@ function loadPost(alias, title)
             _in.api("get_entity_by_alias",{alias: alias, type:"posts"}, function(contents){
                     contents = JSON.parse(contents);
                     var postHtml = template.replaceAll("{{POST_NAME}}", contents.name)
-                    .replaceAll("{{POST_DATE}}", new Date(contents.time*1000).toLocaleDateString())
+                    .replaceAll("{{POST_DATE}}", getDate(new Date(contents.time*1000)))
                     .replaceAll("{{PAGE_CONTENT}}", contents.smalldata+contents.data)
                     $("#content-container").html(postHtml);
             });

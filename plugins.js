@@ -29,29 +29,39 @@ var Plugins = function(){
            context.plugin[i].content.replaceWith = fs.readFileSync(folder + "/" + name + "/" + context.plugin[i].content.source, 'utf-8');
            context.plugin[i].alias = name;
            try{
-                context.plugin[i].serveCode = require("./plugins/"+name+"/server.js");
+                context.plugin[i].serveCode = require("./plugins/"+name+"/"+context.plugin[i].serverSource);
            }
            catch(e){
                context.plugin[i].serveCode = "none";
            }
            context.plugin[i].serverExecute = function(_in, inData, response){
-               if(this.serveCode != "none"){
-                    try {
-                        this.serveCode.execute( _in, inData, message, function(outData){
-                            response.writeHead(200, {"Content-Type": "text/plain"});
-                            response.end(JSON.stringify(outData));
-                        });
+                    
+                    if(this.serveCode != "none"){
+                        try {
+                            this.serveCode.execute(_in, inData, message, function(outData){
+                                if(typeof response == "function") {
+                                    response(outData);
+                                }
+                                else{
+                                    response.writeHead(200, {"Content-Type": "text/plain"});
+                                    response.end(JSON.stringify(outData));
+                                }    
+                            });
+                        }
+                        catch(e)
+                        {   
+                            console.log(e);
+                            if(typeof response == "function") {
+                                response(JSON.stringify(message.error));
+                            }
+                            else{
+                                response.writeHead(200, {"Content-Type": "text/plain"});
+                                response.end(JSON.stringify(message.error));
+                            }
+                        }
                     }
-                    catch(e)
-                    {
-                        response.writeHead(200, {"Content-Type": "text/plain"});
-                        response.end(JSON.stringify(message.error));
-                    }
-               }
-           };
+                };
     });
-   
-   
    
    this.reloadPlugins = function(){
             context.plugin = [];
@@ -62,23 +72,34 @@ var Plugins = function(){
                 context.plugin[i].content.replaceWith = fs.readFileSync(folder + "/" + name + "/" + context.plugin[i].content.source, 'utf-8');
                 context.plugin[i].alias = name;
                 try{
-                    context.plugin[i].serveCode = require("./plugins/"+name+"/server.js");
+                    context.plugin[i].serveCode = require("./plugins/"+name+"/plugin-server.js");
                 }
                 catch(e){
                     context.plugin[i].serveCode = "none";
                 }
                 context.plugin[i].serverExecute = function(_in, inData, response){
+                    console.log(inData);
                     if(this.serveCode != "none"){
                         try {
-                            this.serveCode.execute( _in, inData, message, function(outData){
-                                response.writeHead(200, {"Content-Type": "text/plain"});
-                                response.end(JSON.stringify(outData));
+                            this.serveCode.execute(_in, inData, message, function(outData){
+                                if(typeof response == "function") {
+                                    response(outData);
+                                }
+                                else{
+                                    response.writeHead(200, {"Content-Type": "text/plain"});
+                                    response.end(JSON.stringify(outData));
+                                }    
                             });
                         }
                         catch(e)
-                        {
-                            response.writeHead(200, {"Content-Type": "text/plain"});
-                            response.end(JSON.stringify(message.error));
+                        {   
+                            if(typeof response == "function") {
+                                response(JSON.stringify(message.error));
+                            }
+                            else{
+                                response.writeHead(200, {"Content-Type": "text/plain"});
+                                response.end(JSON.stringify(message.error));
+                            }
                         }
                     }
                 };

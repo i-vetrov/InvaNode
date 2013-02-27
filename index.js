@@ -59,6 +59,12 @@ function respJSON(data, response)
     response.end(JSON.stringify(data));
 }
 
+function respShow301(location, response)
+{
+    response.writeHead(301, {"Location":location});
+    response.end();
+}
+
 function Template()
 {
     this.header = fs.readFileSync(__dirname+"/template/theme/header.html", 'utf-8'); 
@@ -75,7 +81,7 @@ function Template()
     this.reloadTemplate = function(request, response)
     {
         var context = this;
-        db.loggedIn(request, function(check, userName){              
+        db.loggedIn(request, function(check, userObj){              
             if(check){
                   try{
                         context.header = fs.readFileSync(__dirname+"/template/theme/header.html", 'utf-8'); 
@@ -114,6 +120,15 @@ String.prototype.md5=function(){
      return crypto.createHash('md5').update(this).digest("hex");
 };
 
+function getDate(raw)
+{
+    var date;
+    var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    date = '<span class="date-d">'+raw.getDate()+'</span> <span class="date-m">'+monthNames[raw.getMonth()]+'</span> <span class="date-y">'+raw.getFullYear()+'</span>'
+    return date;
+}
+
 function popTemplate(request, response, fname, dname)
 {   
     var forbiddenAlias = ["api", "login", "logout", "admin"]
@@ -121,13 +136,13 @@ function popTemplate(request, response, fname, dname)
         respShow404(response);
         return;
     }
-    var outTemplate = "no data";
+    var outTemplate = "nodata";
     var cookies = {};
       request.headers.cookie && request.headers.cookie.split(';').forEach(function( cookie ) {
         var parts = cookie.split('=');
         cookies[ parts[ 0 ].trim() ] = ( parts[ 1 ] || '' ).trim();
       });
-    db.getMainMenu(fname, function(res) {
+    db.getMainMenu(fname, "html", function(res) {
         getPageContent(fname, dname, function(cont){
             var title;
             if(cont===undefined)
@@ -137,27 +152,31 @@ function popTemplate(request, response, fname, dname)
             else{
                 if(cont.code)
                 {
-                    respError(response)
+                    respError(response);
                     return;
                 }
                 if(fname==="" && dname=="/"){
-                outTemplate = template.header+template.index+template.footer;
-                title = options.vars.title;
-                cont.type = "index";
+                    outTemplate = template.header+template.index+template.footer;
+                    title = options.vars.title;
+                    cont.type = "index";
                 } else {
-                if(cont.type=="pages"){
-                    outTemplate = template.header+template.page+template.footer; 
+                    if(cont.type == "pages"){
+                        outTemplate = template.header+template.page+template.footer; 
+                    }
+                    else if(cont.type == "posts") {
+                        outTemplate = template.header+template.post+template.footer;
+                    }
+                    title = cont.name+' | '+options.vars.title;
                 }
-                else if(cont.type=="posts") {
-                    outTemplate = template.header+template.post+template.footer;
+                if(outTemplate == "nodata") {
+                    respShow301(options.vars.siteUrl, response);
+                    return;
                 }
-                title = cont.name+' | '+options.vars.title;
-                } 
                 plugins.fire(outTemplate.replaceAll("{{JS_CUR_PAGE_URL}}", fname)
                     .replaceAll("{{JS_SITE_URL}}",options.vars.siteUrl)
                     .replaceAll("{{JS_SITE_NAME}}",options.vars.appName)
                     .replaceAll("{{POST_NAME}}", cont.name)
-                    .replaceAll("{{POST_DATE}}", new Date(cont.time*1000).toLocaleDateString())
+                    .replaceAll("{{POST_DATE}}", getDate(new Date(cont.time*1000)))
                     .replaceAll("{{PAGE_CONTENT}}", cont.smalldata+cont.data)
                     .replaceAll("{{MAIN_MENU}}", res)
                     .replaceAll("{{TITLE}}", title)
@@ -172,7 +191,7 @@ function popTemplate(request, response, fname, dname)
     });                 
 }
 
-function popAdminTemplate(userName, request, response)
+function popAdminTemplate(userObj, request, response)
 {       
         try{
         var logged = fs.readFileSync(__dirname+"/template/admin/logged.html", 'utf-8');
@@ -181,7 +200,7 @@ function popAdminTemplate(userName, request, response)
             response.writeHead(200, {"Content-Type": "text/html"});
             response.write(admin.replaceAll("{{APPNAME}}", options.vars.appName)
                                .replaceAll("{{SITE_URL}}", options.vars.siteUrl)
-                               .replaceAll("{{USER_MENU}}", logged.replaceAll("{{USER_NAME}}", userName))
+                               .replaceAll("{{USER_MENU}}", logged.replaceAll("{{USER_NAME}}", userObj.name))
                                .replaceAll("{{NUMBER_OF_PAGES}}", results.pages_num)
                                .replaceAll("{{NUMBER_OF_POSTS}}", results.posts_num)
                                .replaceAll("{{NUMBER_OF_USERS}}", results.users_num));
@@ -222,19 +241,26 @@ function getPageContent(fname, dname, stepFoo)
         }; 
         db.getIndexContent(function(contents){
            if(contents.code === undefined){
-               var i = contents.length;
-               var d = new Date();
-               while (i--)
-               {  
-                    results.data += template.small_post.replaceAll("{{SMALL_POST_NAME}}", contents[i].name)
-                                            .replaceAll("{{SMALL_POST_DATE}}", new Date(contents[i].time*1000).toLocaleDateString()) //new Date(contents[i].time*1000).getDate()+' '+new Date(contents[i].time*1000).getFullYear())
-                                            .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smalldata)
-                                            .replaceAll("{{SMALL_POST_LINK}}", contents[i].alias)
-                                            .replaceAll("{{LINK_ALIAS}}", contents[i].alias)
-                                            .replaceAll("{{LINK_TITLE}}", contents[i].name.replaceAll('["]', "\\'"));
+               if(contents[0].type=='index')
+               {
+                   results = contents[0];
+                   stepFoo(results);                             
                }
-               stepFoo(results);
+               else{
+                   var i = contents.length;
+                   var d = new Date();
+                   while (i--)
+                   {  
+                        results.data += template.small_post.replaceAll("{{SMALL_POST_NAME}}", contents[i].name)
+                                                .replaceAll("{{SMALL_POST_DATE}}", getDate(new Date(contents[i].time*1000))) //new Date(contents[i].time*1000).getDate()+' '+new Date(contents[i].time*1000).getFullYear())
+                                                .replaceAll("{{SMALL_POST_CONTENT}}", contents[i].smalldata)
+                                                .replaceAll("{{SMALL_POST_LINK}}", contents[i].alias)
+                                                .replaceAll("{{LINK_ALIAS}}", contents[i].alias)
+                                                .replaceAll("{{LINK_TITLE}}", contents[i].name.replaceAll('["]', "\\'"));
+                   }
+                   stepFoo(results);
                }
+           }
            else{
                stepFoo("error");
            }
@@ -353,7 +379,7 @@ function uploadImageFile(postData, request, response)
     var data = postDadaObj.filedata;
     var name = postDadaObj.name;
     var size = postDadaObj.size;                       
-    db.loggedIn(request, function(check, userName){                            
+    db.loggedIn(request, function(check, userObj){                            
         if(check){
              try{           
              var dta64 = data.split(',');
@@ -387,7 +413,7 @@ function processTemplateData(postData, request, response)
    var fname = postDadaObj.fname;
    var todo = postDadaObj.todo;
    var fdata = postDadaObj.fdata;
-   db.loggedIn(request, function(check, userName){
+   db.loggedIn(request, function(check, userObj){
         if(check){
             switch(todo)
             {
@@ -439,11 +465,11 @@ function apiCall(request, response)
         });
         var call = querystring.parse(postData).call;
         var data = querystring.parse(postData).data;
-        switch(call){   
-            case "is_logged_in":db.loggedIn(request, function(check, userName){
+        switch(call){
+            case "is_logged_in":db.loggedIn(request, function(check, userObj){
                                     if(check){
                                         response.writeHead(200, {"Content-Type": "text/plain"});
-                                        response.end('{logged:"true","name":'+userName+'}');
+                                        response.end('{logged:"true","name":"'+userObj.name+'",level:"'+userObj.level+'"}');
                                     }
                                     else{
                                         respFalse(response) 
@@ -458,19 +484,19 @@ function apiCall(request, response)
                             break;
             case "reload_template_immediate":template.reloadTemplate(request, response);
                             break;
-            case "load_all_pages":db.getAll('pages', function(outData){
+            case "load_all_pages":db.getAll(request, 'pages', function(outData){
                                         response.writeHead(200, {"Content-Type": "text/plain"});
                                         response.end(outData);
                                    });
 
                             break;
-            case "load_all_posts":db.getAll('posts', function(outData){
+            case "load_all_posts":db.getAll(request, 'posts', function(outData){
                                         response.writeHead(200, {"Content-Type": "text/plain"});
                                         response.end(outData);
                                    });
 
                             break;
-            case "load_all_users":db.getAll('users', function(outData){
+            case "load_all_users":db.getAll(request, 'users', function(outData){
                                         response.writeHead(200, {"Content-Type": "text/plain"});
                                         response.end(outData);
                                    });
@@ -486,7 +512,6 @@ function apiCall(request, response)
                                             response.end(JSON.stringify(files));
                                         }
                                       });
-
                             break;     
             case "process_template_data":processTemplateData(data, request, response);                     
                             break;
@@ -501,22 +526,25 @@ function apiCall(request, response)
                                        });
                             break;
             case "get_entity_by_id":api.getEntityById(data, db, plugins, function(data){
-                                            respJSON(data, response);
+                                            if(data == 'error') respData(data, response)
+                                            else respJSON(data, response);
                                        });
                             break;
             case "get_latest_posts":api.getLatestPosts(data, db, plugins, function(data){
-                                            respData(data, response);
+                                            if(data == 'error') respData(data, response)
+                                            else respJSON(data, response);
                                        });
                             break;
-            case "get_all_pages":api.getAllPages(db, plugins, function(data){
+            case "get_all_pages":api.getAllPages(request, db, plugins, function(data){
                                             respData(data, response);
                                        });
                             break;
             case "get_page_type":api.getPageType(data, db, function(data){
-                                            respJSON(data, response);
+                                            if(data == 'error') respData(data, response)
+                                            else respJSON(data, response);
                                        });
                             break;
-            case "load_plugins_admin":db.loggedIn(request, function(check, userName){
+            case "load_plugins_admin":db.loggedIn(request, function(check, userObj){
                                             if(check){
                                                  plugins.fireAdmin(response);
                                             }
@@ -525,7 +553,7 @@ function apiCall(request, response)
                                             }
                                 });
                             break;
-            case "save_plugin":db.loggedIn(request, function(check, userName){
+            case "save_plugin":db.loggedIn(request, function(check, userObj){
                                             if(check){
                                                  plugins.savePlugin(fs, data, response);
                                             }
@@ -536,13 +564,26 @@ function apiCall(request, response)
                             break;
             case "get_template":api.getTemplate(data, template, plugins, function(data){
                                             respData(data, response);
-                                       });
+                                });
                             break;
+            case "get_index":api.getIndex(db, plugins, function(data){
+                                            respData(data, response);
+                             });            
+                            break;
+            case "set_index":api.setIndex(request, data, db, function(data){
+                                            respData(data, response);
+                             });            
+                            break;                
             case "reload_plugins":plugins.reloadPlugins(response);
                             break;
             case "plugin":  var _in = api.textApi(db, template, request, plugins);
                             plugins.serverExecute(_in, data, response);
-                            break;                
+                            break;
+            case "load_dashboard":api.loadDashboard(db, function(data){
+                                        if(data == 'error') respData(data, response)
+                                        else respJSON(data, response);
+                                  });
+                            break;
             default:respError(response);
                             break;
         } 
@@ -632,9 +673,9 @@ http.createServer(function(request, response) {
           } 
           else{
                switch(fname){   
-                   case "admin":db.loggedIn(request, function(check, userName){              
+                   case "admin":db.loggedIn(request, function(check, userObj){              
                                     if(check){
-                                        popAdminTemplate(userName, request, response);
+                                        popAdminTemplate(userObj, request, response);
                                     }
                                     else{
                                         response.writeHead(200, {"Content-Type": "text/html"});

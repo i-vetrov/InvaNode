@@ -1,69 +1,87 @@
 getEntityByAlias = function(data, db, plugins, stepFoo){
-    var dataObj = JSON.parse(data);
-    db.getRegularEntityByAlias(dataObj.alias, "/", function(result){
-       if(result !== undefined){
-            if(result.code !== undefined){
-                stepFoo("error"); 
+    try{
+        var dataObj = JSON.parse(data);
+        db.getRegularEntityByAlias(dataObj.alias, "/", function(result){
+           if(result !== undefined){
+                if(result.code !== undefined){
+                    stepFoo("error"); 
+                }
+                else{
+                    plugins.fire(result.smalldata, dataObj.type, function(smalldata){
+                        result.smalldata = smalldata;
+                        plugins.fire(result.data, dataObj.type, function(bigdata){
+                        result.data = bigdata;
+                        stepFoo(result);
+                        });
+                    });
+                }
             }
             else{
-                plugins.fire(result.smalldata, dataObj.type, function(smalldata){
-                    result.smalldata = smalldata;
-                    plugins.fire(result.data, dataObj.type, function(bigdata){
-                    result.data = bigdata;
-                    stepFoo(result);
-                    });
-                });
+                stepFoo("error");    
             }
-        }
-        else{
-            stepFoo("error");    
-        }
-    });
+        });
+    }    
+    catch (e){
+        console.log(e);
+        stepFoo("error");
+    } 
 }
 exports.getEntityByAlias = getEntityByAlias;
 
 getEntityById = function(data, db, plugins, stepFoo){
-    var dataObj = JSON.parse(data);
-    db.getRegularEntityById(dataObj.id, dataObj.type, function(result){
-        if(result !== undefined){
-            if(result.code !== undefined){
-                stepFoo("error"); 
+    try{ 
+        var dataObj = JSON.parse(data);
+        db.getRegularEntityById(dataObj.id, dataObj.type, function(result){
+            if(result !== undefined){
+                if(result.code !== undefined){
+                    stepFoo("error"); 
+                }
+                else{
+                    plugins.fire(result.smalldata, dataObj.type, function(smalldata){
+                        result.smalldata = smalldata;
+                        plugins.fire(result.data, dataObj.type, function(bigdata){
+                        result.data = bigdata;
+                        stepFoo(result);
+                        });
+                    });
+                }
             }
             else{
-                plugins.fire(result.smalldata, dataObj.type, function(smalldata){
-                    result.smalldata = smalldata;
-                    plugins.fire(result.data, dataObj.type, function(bigdata){
-                    result.data = bigdata
-                    stepFoo(result);
-                    });
-                });
+                stepFoo("error");    
             }
-        }
-        else{
-            stepFoo("error");    
-        }
-    });
+        });
+    }    
+    catch (e){
+        console.log(e);
+        stepFoo("error");
+    } 
 }
 exports.getEntityById = getEntityById;
 
 getLatestPosts = function(data, db, plugins, stepFoo){
-    var dataObj = JSON.parse(data);
-    db.getIndexContent(function(results){
-      var out =[];
-      var max = (parseInt(dataObj.count)<(results.length))? parseInt(dataObj.count) : results.length; 
-      while (max--){
-          out[max] = results[max];  
-      }
-      plugins.fire(JSON.stringify(out), "posts", function(data){
-                    stepFoo(data);
-      });
-    });
+    try{ 
+        var dataObj = JSON.parse(data);
+        db.getLatestPosts(function(results){
+            var out =[];
+            var max = (parseInt(dataObj.count)<(results.length))? parseInt(dataObj.count) : results.length; 
+            while (max--){
+                out[max] = results[max];  
+            }
+            plugins.fire(JSON.stringify(out), "posts", function(data){
+                stepFoo(data);
+            });
+        });
+    }    
+    catch (e){
+        console.log(e);
+        stepFoo("error");
+    }    
 }
 exports.getLatestPosts = getLatestPosts;
 
-getAllPages = function(db, plugins, stepFoo){
-    db.getAll("pages" ,function(results){
-        plugins.fire(results, "pages", function(data){
+getAllPages = function(request, db, plugins, stepFoo){
+    db.getMainMenu("", "list" ,function(results){
+        plugins.fire(JSON.stringify(results), "pages", function(data){
                     stepFoo(data);
         });
     });
@@ -71,14 +89,20 @@ getAllPages = function(db, plugins, stepFoo){
 exports.getAllPages = getAllPages;
 
 getTemplate = function(data, template, plugins, stepFoo){
-    var dataObj = JSON.parse(data);
-    var list = ['page','post','small_post','footer','header','index']
-    if(list.indexOf(dataObj.name) != -1){
-        plugins.fire(template[dataObj.name], dataObj.name, function(data){
-                    stepFoo(data);
-        });
-    }
-    else{
+    try{    
+        var dataObj = JSON.parse(data);
+        var list = ['page','post','small_post','footer','header','index']
+        if(list.indexOf(dataObj.name) != -1){
+            plugins.fire(template[dataObj.name], dataObj.name, function(data){
+                        stepFoo(data);
+            });
+        }
+        else{
+            stepFoo("error");
+        }
+    }    
+    catch (e){
+        console.log(e);
         stepFoo("error");
     }
 }
@@ -86,8 +110,9 @@ exports.getTemplate = getTemplate;
 
 getPageType = function(data, db, stepFoo)
 {
-    var dataObj = JSON.parse(data);
-    db.getRegularEntityByAlias(dataObj.alias, "/", function(result){
+    try{
+        var dataObj = JSON.parse(data);
+        db.getRegularEntityByAlias(dataObj.alias, "/", function(result){
                     if(result == undefined){
                         if(dataObj.alias == "") {
                             result = {type:"index"};
@@ -97,11 +122,72 @@ getPageType = function(data, db, stepFoo)
                         }
                     }
                     stepFoo(result.type);
-    });
+        });
+    }
+    catch (e){
+        console.log(e);
+        stepFoo("error");
+    }
 }
 exports.getPageType = getPageType;
 
-exports.textApi = function(db, template, request, plugins){
+getIndex = function(db, plugins, stepFoo)
+{
+    db.getIndexContent(function(result){
+        var res = JSON.stringify(result);
+        plugins.fire(res, "index", function(data){
+             stepFoo(data);
+        });
+    });
+         
+}
+exports.getIndex = getIndex;
+
+loadDashboard = function(db, stepFoo)
+{
+    var dashBoard = {
+        indexType: '',
+        indexName: '',
+        indexPageAlias: ''
+    };
+    
+    
+    db.getIndexContent(function(result){
+        if(result[0].type=="index") {
+           dashBoard.indexType = 'page';
+           dashBoard.indexName = result[0].name;
+           dashBoard.indexPageAlias = result[0].alias;
+        }
+        else if(result[0].type=="posts")
+        {
+           dashBoard.indexType = '$list_of_posts';
+           dashBoard.indexName = "<b>Basic:</b> Latest posts";
+           dashBoard.indexPageAlias = "$list_of_posts";
+        }
+        
+        
+        stepFoo(dashBoard);
+    });
+         
+}
+exports.loadDashboard = loadDashboard;
+
+setIndex = function (request, data, db, stepFoo)
+{
+    try{
+        var dataObj = JSON.parse(data);
+        db.setIndexContent(request, dataObj, function(data){
+            stepFoo(data);
+        });
+    }
+    catch(e){
+        console.log(e);
+        stepFoo('error');
+    }
+}
+exports.setIndex = setIndex;
+
+textApi = function(db, template, request, plugins){
     var ret = {api: function(p1, p2, p3){
         var call, data, callback
         if(typeof p1 == 'undefined') {
@@ -127,12 +213,16 @@ exports.textApi = function(db, template, request, plugins){
         if(typeof p3 == 'function'){
             callback = p3;
         }
-        if (typeof data == 'undefined') data = '{"default":"default"}';
-        var dataStr = JSON.stringify(data);
+        if (typeof data == 'undefined') {
+            var dataStr = '{"default":"default"}';
+        }
+        else{
+            var dataStr = JSON.stringify(data);
+        }
         switch(call){
-            case "is_logged_in":db.loggedIn(request, function(check, userName){
+            case "is_logged_in":db.loggedIn(request, function(check, userObj){
                                     if(check){
-                                        callback('{logged:"true","name":'+userName+'}');
+                                        callback('{logged:"true","name":"'+userObj.name+'","level":"'+userObj.level+'"}');
                                     }
                                     else{
                                         callback("false") 
@@ -162,6 +252,13 @@ exports.textApi = function(db, template, request, plugins){
             case "get_template":getTemplate(dataStr, template, plugins, function(data){
                                             callback(data);
                                        });
+                            break;
+            case "get_index":getIndex(db, plugins, function(data){
+                                            callback(data);
+                             });            
+                            break;
+            case "plugin":  var _in = textApi(db, template, request, plugins);
+                                            plugins.serverExecute(_in, dataStr, callback);
                             break;                
             default: callback("error");
                 break;
@@ -169,4 +266,5 @@ exports.textApi = function(db, template, request, plugins){
     }
   }
   return ret;
-}    
+}
+exports.textApi = textApi;

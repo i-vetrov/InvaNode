@@ -59,7 +59,33 @@ function sqlEscape (str) {
 
 exports.getIndexContent = function (stepFoo)
 {
-    client.query("SELECT * FROM posts ORDER BY id", function (err, results, fields) {
+    client.query("SELECT * FROM pages WHERE type='index' AND published=1", function (err, results, fields) {
+        if (err) {
+            console.log(err);
+            stepFoo(err);
+        }
+        else{
+            if(results[0]!==undefined){
+                        stepFoo(results);
+                }
+            else{
+                client.query("SELECT * FROM posts WHERE published=1 ORDER BY id", function (err, results, fields) {
+                    if (err) {
+                        console.log(err);
+                        stepFoo(err);
+                    }
+                    else{
+                        stepFoo(results);
+                    }
+                });
+            }      
+        }
+    });
+}
+
+exports.getLatestPosts = function(stepFoo)
+{
+    client.query("SELECT * FROM posts WHERE published=1 ORDER BY id", function (err, results, fields) {
         if (err) {
             console.log(err);
             stepFoo(err);
@@ -67,13 +93,47 @@ exports.getIndexContent = function (stepFoo)
         else{
             stepFoo(results);
         }
-    });   
+    });
+}
+
+exports.setIndexContent = function(request, data, stepFoo)
+{
+     loggedIn(request, function(check, userObj){
+        if(check){ 
+            client.query("UPDATE pages SET type='pages' WHERE type='index'", function (err, results, fields) {
+                if(err) {
+                    console.log(err);
+                    stepFoo("error");
+                }
+                else{
+                    if(data.set != "$list_of_posts"){
+                        client.query("UPDATE pages SET type='index' WHERE alias='"+data.set+"'", function (err, result, fields) {
+                            if(err) {
+                                console.log(err);
+                                stepFoo("error");
+                            }
+                            else{
+                                stepFoo("done");
+                            }
+                        });
+                    }
+                    else{
+                        stepFoo("done");
+                    }
+                }
+            });
+        }    
+        else{
+            console.log('login error');
+            stepFoo("error");
+        }
+    });    
 }
 
 exports.getRegularEntityByAlias = function (fname, dname, stepFoo)
 {
     client.query(
-        "SELECT * FROM pages WHERE alias='"+sqlEscape(fname)+"' UNION SELECT * FROM posts WHERE alias='"+sqlEscape(fname)+"'", function (err, results, fields) {
+        "SELECT * FROM pages WHERE alias='"+sqlEscape(fname)+"' AND published=1 UNION SELECT * FROM posts WHERE alias='"+sqlEscape(fname)+"' AND published=1", function (err, results, fields) {
             if (err) {
                 console.log(err);
                 stepFoo(err);
@@ -87,7 +147,7 @@ exports.getRegularEntityByAlias = function (fname, dname, stepFoo)
 exports.getRegularEntityById = function (id, type, stepFoo)
 {
     client.query(
-        "SELECT * FROM "+sqlEscape(type)+" WHERE id='"+sqlEscape(id)+"'", function (err, results, fields) {
+        "SELECT * FROM "+sqlEscape(type)+" WHERE id='"+sqlEscape(id)+"' AND published=1", function (err, results, fields) {
             if (err) {
                 console.log(err);
                 stepFoo(err);
@@ -145,9 +205,10 @@ exports.editDataProc = function (request, data, stepFoo)
     var type = sqlEscape(data.type);
     var id = sqlEscape(data.id);
     var description = sqlEscape(data.description);
+    var published = sqlEscape(data.published);
     loggedIn(request, function(check, userName){              
         if(check){
-            client.query("UPDATE "+type+" SET name='"+name+"', data='"+afterCut[1]+"', smalldata='"+afterCut[0]+"', alias='"+alias+"', description='"+description+"' WHERE id='"+id+"'",
+            client.query("UPDATE "+type+" SET name='"+name+"', data='"+afterCut[1]+"', smalldata='"+afterCut[0]+"', alias='"+alias+"', description='"+description+"', published='"+published+"' WHERE id='"+id+"'",
                 function (err, results, fields) {
                     if(!err){
                         stepFoo(false);           
@@ -162,7 +223,6 @@ exports.editDataProc = function (request, data, stepFoo)
         }
 });  
 }
-
 
 exports.editUserProc = function (request, data, stepFoo)
 {   
@@ -220,6 +280,7 @@ exports.saveDataProc = function (request, type, data, stepFoo)
         afterCut[1]='';
     }
     var alias = sqlEscape(data.alias);
+    var published = sqlEscape(data.published);
     var description = sqlEscape(data.description);
   }
   else{
@@ -230,7 +291,7 @@ exports.saveDataProc = function (request, type, data, stepFoo)
   loggedIn(request, function(check, userName){              
         if(check){
               if(type!="users"){
-                  client.query("INSERT INTO "+type+" VALUES(NULL, "+date+", '"+name+"', '"+afterCut[1]+"', '"+afterCut[0]+"','"+alias+"','"+type+"','"+description+"')",
+                  client.query("INSERT INTO "+type+" VALUES(NULL, "+date+", '"+name+"', '"+afterCut[1]+"', '"+afterCut[0]+"','"+alias+"','"+type+"','"+description+"','"+published+"')",
                         function (err, results, fields) {
                             if(!err){
                                 stepFoo(false);           
@@ -241,7 +302,7 @@ exports.saveDataProc = function (request, type, data, stepFoo)
                   });
               }      
               else{
-                 client.query("INSERT INTO "+type+" VALUES(NULL, '"+username+"', md5('"+password+"'), '')",
+                 client.query("INSERT INTO "+type+" VALUES(NULL, '"+username+"', md5('"+password+"'), '', 0)",
                         function (err, results, fields) {
                             if(!err){
                                 stepFoo(false);           
@@ -282,36 +343,49 @@ exports.openDataForEditProc = function (request, data, stepFoo)
 });
 }
 
-exports.getAll = function (type, stepFoo)
+exports.getAll = function (request, type, stepFoo)
 {
   switch(type)
   {
       case 'pages':
-      case 'posts':  client.query('SELECT id,time,name,alias FROM '+type, function (err, results, fields) {
-                            if (err) {console.log(err);}
-                            else{
-                                stepFoo(JSON.stringify(results, function (key, value) {
-                                    if (typeof value === 'number' && !isFinite(value)) {
-                                        return String(value);
-                                    }
-                                    return value;
-                                          })
-                                ); 
-                            }
-                     });      
-        break;
-      case 'users':  client.query('SELECT id,name FROM users', function (err, results, fields) {
-                            if (err) {console.log(err);}
-                            else{
-                                stepFoo(JSON.stringify(results, function (key, value) {
-                                    if (typeof value === 'number' && !isFinite(value)) {
-                                                       return String(value);
+      case 'posts': loggedIn(request, function(check, userObj){
+                        var query = 'SELECT id,time,name,alias FROM '+type+' WHERE published=1';
+                        if(check){
+                            query = 'SELECT id,time,name,alias FROM '+type;
+                        }
+                        client.query(query, function (err, results, fields) {
+                                if (err) {console.log(err);}
+                                else{
+                                    stepFoo(JSON.stringify(results, function (key, value) {
+                                        if (typeof value === 'number' && !isFinite(value)) {
+                                            return String(value);
                                         }
-                                    return value;
-                                          })
-                                ); 
-                            }                                    
-                     });      
+                                        return value;
+                                              })
+                                    ); 
+                                }
+                        });
+                    });    
+        break;
+      case 'users': loggedIn(request, function(check, userObj){ 
+                        if(check){ 
+                            client.query('SELECT id,name FROM users', function (err, results, fields) {
+                                    if (err) {console.log(err);}
+                                    else{
+                                        stepFoo(JSON.stringify(results, function (key, value) {
+                                            if (typeof value === 'number' && !isFinite(value)) {
+                                                               return String(value);
+                                                }
+                                            return value;
+                                                  })
+                                        ); 
+                                    }                                    
+                             });
+                        }
+                        else{
+                            stepFoo('error');
+                        }
+                    });   
        break;                           
   }
 }
@@ -370,13 +444,15 @@ loggedIn = function (request, stepFoo)
         if(!err){
             if(results[0]!==undefined&&results!==undefined)
             {
-                stepFoo(true, results[0].name);           
+                var userObj = {name:results[0].name, level:results[0].level}
+                stepFoo(true, userObj);           
             }
             else{
                stepFoo(false, null);
             }
         }
         else{
+            stepFoo(false, null);
             console.log(err);
         }
     });   
@@ -384,23 +460,30 @@ loggedIn = function (request, stepFoo)
 
 exports.loggedIn = loggedIn;
 
-exports.getMainMenu = function (fname, stepFoo)
+exports.getMainMenu = function (fname, type, stepFoo)
 {
-    client.query('SELECT name, alias FROM pages', function (err, results, fields) {
+    client.query('SELECT name, alias, type FROM pages WHERE published=1', function (err, results, fields) {
         if (err) {
             console.log(err);
+            stepFoo("");
         }
         else{
-            var mmOut ='<ul><li><a';
-            if(fname==="") {mmOut +=' class="active"';}
-            mmOut +=' href="'+options.vars.siteUrl+'" alias="" page-type="index" page-title="'+options.vars.appName.replaceAll('["]', "\\'")+'">Home</a></li>';
+            if(type=="list"){
+                stepFoo(results);
+            }
+            var menuOut ='<ul><li><a';
+            if(fname==="") {menuOut +=' class="active"';}
+            menuOut +=' href="'+options.vars.siteUrl+'" alias="" page-type="index" page-title="'+options.vars.appName.replaceAll('["]', "\\'")+'">Home</a></li>';
             results.forEach(function(result){
-                mmOut += '<li><a';
-                if(fname==result.alias){mmOut +=' class="active"';}
-                mmOut +=' href="'+options.vars.siteUrl+result.alias+'" alias="'+result.alias+'" page-type="pages" page-title="'+result.name.replaceAll('["]', "\\'")+'">'+result.name+'</a></li>';
+                if(result.type != "index")
+                {  
+                    menuOut += '<li><a';
+                    if(fname==result.alias){menuOut +=' class="active"';}
+                    menuOut +=' href="'+options.vars.siteUrl+result.alias+'" alias="'+result.alias+'" page-type="pages" page-title="'+result.name.replaceAll('["]', "\\'")+'">'+result.name+'</a></li>';
+                }
             });
-            mmOut += '</ul>';
-            stepFoo(mmOut);  
+            menuOut += '</ul>';
+            stepFoo(menuOut);  
         }
     });
 }

@@ -1,7 +1,7 @@
 InvaNode
 ========
 
-NOTE!: This repo contains InvaNode CMS with MySQL support. For MongoDB support visit <a href="https://github.com/i-vetrov/InvaNode/">InvaNode-mongo repo</a>
+NOTE!: This repo contains InvaNode CMS with MySQL support. For MongoDB support visit <a href="https://github.com/i-vetrov/InvaNode-mongo/">InvaNode-mongo repo</a>
 ============================================================================================================================================================
 
 Blog CMS based on Node.js amd MySQL.
